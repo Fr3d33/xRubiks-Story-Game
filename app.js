@@ -8,12 +8,12 @@ document.addEventListener("DOMContentLoaded", function () {
   nextButton.addEventListener("click", function () {
     clicks++;
     story.innerHTML = text[clicks];
-    hideTitle(); // Aufruf der Funktion zum Verstecken des Titels nach jedem Klick
+    hideTitle();
   });
 
   function hideTitle() {
     if (clicks == 1) {
-      h1.style.display = "none"; // Korrekte Referenzierung des h1-Elements
+      h1.style.display = "none";
     }
   }
 });
