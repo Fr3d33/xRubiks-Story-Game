@@ -1,0 +1,38 @@
+@import url("https://fonts.googleapis.com/css2?family=Poppins:wght@400;700&display=swap");
+
+:root {
+  --ui-color: #fcfc76;
+}
+
+body {
+  font-family: "Poppins", sans-serif;
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
+  min-height: 100vh;
+  margin: 0;
+}
+
+.ui {
+  border: black 2px solid;
+  border-radius: 10px;
+  background-color: var(--ui-color);
+  display: grid;
+  place-items: center;
+  height: 200px;
+  width: 400px;
+  padding: 20px; /* Zum Hinzufügen von Abstand um den Inhalt */
+}
+
+#Next-Button {
+  color: white;
+  background-color: rgba(40, 44, 51, 1);
+  border-radius: 5px;
+  padding: 5px 20px;
+  font-size: 16px;
+  cursor: pointer;
+  margin-top: 20px;
+  margin-left: 300px;
+  outline: none;
+  border: black 1px solid;
+}
