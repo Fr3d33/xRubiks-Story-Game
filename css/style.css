@@ -11,6 +11,7 @@ body {
   align-items: flex-end;
   min-height: 100vh;
   margin: 0;
+  
 }
 
 .ui {
@@ -19,9 +20,9 @@ body {
   background-color: var(--ui-color);
   display: grid;
   place-items: center;
-  height: 200px;
   width: 400px;
   padding: 20px; /* Zum Hinzufügen von Abstand um den Inhalt */
+  margin-bottom: 10px;
 }
 
 #Next-Button {
@@ -33,7 +34,6 @@ body {
   cursor: pointer;
   outline: none;
   border: black 1px solid;
-  
 }
 
 #Back-Button {
@@ -45,6 +45,5 @@ body {
   cursor: pointer;
   outline: none;
   border: black 1px solid;
-  position: absolute;
-  
 }
+

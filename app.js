@@ -1,10 +1,26 @@
 document.addEventListener("DOMContentLoaded", function () {
-  let text = ["xRubiks Story Game", "Lol", "3", "4"];
   let clicks = 0;
+  let text = []
   let nextButton = document.getElementById("Next-Button");
   let story = document.getElementById("story");
   let h1 = document.getElementById("h1");
   let backButton = document.getElementById("Back-Button")
+
+  getText("xrubiks_story.txt");
+
+  async function getText(file) {
+    let myObject = await fetch(file);
+    let myText = await myObject.text();
+    text = myText.split("\n");
+    
+    text = text.filter((a) => a.trim().length > 0 )
+
+    console.log(text)
+  };  
+
+  
+
+  
 
 
   backButton.style.display = "none";
