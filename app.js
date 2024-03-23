@@ -5,6 +5,8 @@ document.addEventListener("DOMContentLoaded", function () {
   let story = document.getElementById("story");
   let h1 = document.getElementById("h1");
   let backButton = document.getElementById("Back-Button")
+  let images = ["/images/image1.jpg", ""]
+  let backgroundImage = document.getElementById("background-image")
 
   getText("xrubiks_story.txt");
 
@@ -13,12 +15,8 @@ document.addEventListener("DOMContentLoaded", function () {
     let myText = await myObject.text();
     text = myText.split("\n");
     
-    text = text.filter((a) => a.trim().length > 0 )
-
-    console.log(text)
-  };  
-
-  
+    text = text.filter((a) => a.trim().length > 0 );
+  };
 
   
 
@@ -26,24 +24,23 @@ document.addEventListener("DOMContentLoaded", function () {
   backButton.style.display = "none";
 
   nextButton.addEventListener("click", function () {
-    if (clicks < text.length -1) {
+    if (clicks < text.length) {
       backButton.style.display = "block"
       clicks++;
-      story.innerHTML = text[clicks];
+      story.innerHTML = text[clicks -1];
+      backgroundImage.src = images[clicks -1];
       hideTitle();
       hideStory();
     } else {
       console.log("Du bist auf der letzten Seite.")
     }
-      
-   
   });
 
 
   backButton.addEventListener("click", function() {
     if (clicks > 0) {
       clicks--;
-      story.innerHTML = text[clicks];
+      story.innerHTML = text[clicks -1];
       hideTitle();
       hideStory();
       console.log(clicks)

@@ -47,3 +47,15 @@ body {
   border: black 1px solid;
 }
 
+.background-image {
+  position: absolute;
+  width: 100px;
+  height: 100px;
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
+  min-height: 100vh;
+  margin: 0;
+  
+}
+
