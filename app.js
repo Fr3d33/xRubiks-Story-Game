@@ -1,5 +1,7 @@
 document.addEventListener("DOMContentLoaded", function () {
   let clicks = 0;
+  let audio1 = new Audio("/voicelines/voiceline1.mp3");
+  let audio2 = new Audio("/voicelines/voiceline2.mp3");
   let text = [];
   let nextButton = document.getElementById("Next-Button");
   let story = document.getElementById("story");
@@ -28,10 +30,32 @@ document.addEventListener("DOMContentLoaded", function () {
       backgroundImage.src = images[clicks - 1];
       hideTitle();
       hideStory();
+      playVoice();
+
+      console.log(clicks);
     } else {
       console.log("Du bist auf der letzten Seite.");
     }
   });
+
+  function playVoice() {
+    if (clicks == 0) {
+      audio1.pause();
+      audio1.currentTime = 0;
+      audio2.pause();
+      audio2.currentTime = 0;
+    }
+    if (clicks == 1) {
+      audio2.pause();
+      audio2.currentTime = 0;
+      audio1.play();
+    }
+    if (clicks == 2) {
+      audio1.pause();
+      audio1.currentTime = 0;
+      audio2.play();
+    }
+  }
 
   backButton.addEventListener("click", function () {
     if (clicks > 0) {
@@ -39,6 +63,7 @@ document.addEventListener("DOMContentLoaded", function () {
       story.innerHTML = text[clicks - 1];
       hideTitle();
       hideStory();
+      playVoice();
       console.log(clicks);
     } else {
       console.log("Du bist auf der ersten Seite.");
