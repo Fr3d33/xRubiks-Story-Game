@@ -61,6 +61,7 @@ document.addEventListener("DOMContentLoaded", function () {
     if (clicks > 0) {
       clicks--;
       story.innerHTML = text[clicks - 1];
+      backgroundImage.src = images[clicks - 1];
       hideTitle();
       hideStory();
       playVoice();
