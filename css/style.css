@@ -15,19 +15,22 @@ body {
 
 .background-image {
   position: absolute;
+  top: 0;
+  left: 0;
   width: 100%;
   height: 100%;
-  background-position: center;
-  background-repeat: no-repeat;
-  background-size: cover;
   z-index: -1;
-  aspect-ratio: 1/1;
 }
 
 .ui {
   border: black 2px solid;
   border-radius: 10px;
-  background-color: var(--ui-color);
+  background-color: rgba(
+    252,
+    252,
+    118,
+    0.6
+  ); /* Hier kannst du die Transparenz anpassen, indem du den Alpha-Kanalwert änderst (0 für transparent, 1 für undurchsichtig) */
   display: grid;
   place-items: center;
   width: 400px;
