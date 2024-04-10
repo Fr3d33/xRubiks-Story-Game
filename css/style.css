@@ -61,3 +61,44 @@ body {
   outline: none;
   border: black 1px solid;
 }
+
+.startmenu {
+  border: black 2px solid;
+  border-radius: 10px;
+  background-color: rgba(
+    252,
+    252,
+    118,
+    0.6
+  ); /* Hier kannst du die Transparenz anpassen, indem du den Alpha-Kanalwert änderst (0 für transparent, 1 für undurchsichtig) */
+  display: grid;
+  place-items: center;
+  width: 400px;
+  padding: 20px;
+  margin-bottom: 200px;
+  position: relative;
+  z-index: 2;
+  height: 200px;
+}
+
+.story1 {
+  color: white;
+  background-color: rgba(40, 44, 51, 1);
+  border-radius: 5px;
+  padding: 5px 20px;
+  font-size: 16px;
+  cursor: pointer;
+  outline: none;
+  border: black 1px solid;
+}
+
+.story2 {
+  color: white;
+  background-color: rgba(40, 44, 51, 1);
+  border-radius: 5px;
+  padding: 5px 20px;
+  font-size: 16px;
+  cursor: pointer;
+  outline: none;
+  border: black 1px solid;
+}
