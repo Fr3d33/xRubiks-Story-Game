@@ -1,0 +1,21 @@
+Willkommen beim interaktiven Story Game! Begebe dich auf ein spannendes Abenteuer und triff Entscheidungen, die den Verlauf der Geschichte beeinflussen.
+
+> Du stehst vor einem alten Schloss. Möchtest du eintreten oder umkehren?
+Eintreten
+Umkehren
+
+> Du betrittst das Schloss und findest einen dunklen Flur. Möchtest du eine Fackel anzünden oder ohne Licht weitergehen?
+Fackel anzünden
+Ohne Licht weitergehen
+
+> Mit der Fackel in der Hand gehst du weiter und erreichst eine Kreuzung. Möchtest du nach links oder rechts gehen?
+Links
+Rechts
+
+> Du folgst dem Gang nach links und triffst auf eine verschlossene Tür. Möchtest du versuchen, sie zu öffnen oder zurückgehen?
+Versuchen, sie zu öffnen
+Zurückgehen
+
+> Die Tür öffnet sich und du trittst in einen geheimnisvollen Raum ein. Möchtest du die Truhe öffnen oder den Raum verlassen?
+Truhe öffnen
+Raum verlassen

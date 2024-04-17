@@ -1,17 +1,17 @@
 document.addEventListener("DOMContentLoaded", function () {
   let clicks = 0;
-  let audio1 = new Audio("/voicelines/voiceline1.mp3");
-  let audio2 = new Audio("/voicelines/voiceline2.mp3");
-  let audio3 = new Audio("/voicelines/voiceline3.mp3");
-  let audio4 = new Audio("/voicelines/voiceline4.mp3");
-  let audio5 = new Audio("/voicelines/voiceline5.mp3");
-  let audio6 = new Audio("/voicelines/voiceline6.mp3");
+  let audio1 = new Audio("/story1/voicelines/voiceline1.mp3");
+  let audio2 = new Audio("/story1/voicelines/voiceline2.mp3");
+  let audio3 = new Audio("/story1/voicelines/voiceline3.mp3");
+  let audio4 = new Audio("/story1/voicelines/voiceline4.mp3");
+  let audio5 = new Audio("/story1/voicelines/voiceline5.mp3");
+  let audio6 = new Audio("/story1/voicelines/voiceline6.mp3");
   let text = [];
   let nextButton = document.getElementById("Next-Button");
   let story = document.getElementById("story");
   let h1 = document.getElementById("h1");
   let backButton = document.getElementById("Back-Button");
-  let images = ["/images/image1.jpg", ""];
+  let images = ["/story1/images/image1.jpg", ""];
   let backgroundImage = document.getElementById("background-image");
 
   getText("xrubiks_story.txt");
