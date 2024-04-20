@@ -11,18 +11,33 @@ body {
   align-items: flex-end;
   min-height: 100vh;
   margin: 0;
-  
+}
+
+.background-image {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: -1;
 }
 
 .ui {
   border: black 2px solid;
   border-radius: 10px;
-  background-color: var(--ui-color);
+  background-color: rgba(
+    252,
+    252,
+    118,
+    0.6
+  ); /* Hier kannst du die Transparenz anpassen, indem du den Alpha-Kanalwert änderst (0 für transparent, 1 für undurchsichtig) */
   display: grid;
   place-items: center;
   width: 400px;
-  padding: 20px; /* Zum Hinzufügen von Abstand um den Inhalt */
+  padding: 20px;
   margin-bottom: 10px;
+  position: relative;
+  z-index: 2;
 }
 
 #Next-Button {
@@ -47,15 +62,43 @@ body {
   border: black 1px solid;
 }
 
-.background-image {
+.startmenu {
+  border: black 2px solid;
+  border-radius: 10px;
+  background-color: rgba(
+    252,
+    252,
+    118,
+    0.6
+  ); /* Hier kannst du die Transparenz anpassen, indem du den Alpha-Kanalwert änderst (0 für transparent, 1 für undurchsichtig) */
+  display: grid;
+  place-items: center;
+  width: 400px;
+  padding: 20px;
+  margin-bottom: 200px;
   position: relative;
-  width: 100px;
-  height: 100px;
-  display: flex;
-  justify-content: center;
-  align-items: flex-end;
-  min-height: 100vh;
-  margin: 0;
-  
+  z-index: 2;
+  height: 200px;
 }
 
+.story1 {
+  color: white;
+  background-color: rgba(40, 44, 51, 1);
+  border-radius: 5px;
+  padding: 5px 20px;
+  font-size: 16px;
+  cursor: pointer;
+  outline: none;
+  border: black 1px solid;
+}
+
+.story2 {
+  color: white;
+  background-color: rgba(40, 44, 51, 1);
+  border-radius: 5px;
+  padding: 5px 20px;
+  font-size: 16px;
+  cursor: pointer;
+  outline: none;
+  border: black 1px solid;
+}
