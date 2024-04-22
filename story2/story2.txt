@@ -1,21 +1,22 @@
-Willkommen beim interaktiven Story Game! Begebe dich auf ein spannendes Abenteuer und triff Entscheidungen, die den Verlauf der Geschichte beeinflussen.
+1 Long time ago there was a monster attacking the world.
+2 Where do you want to go first in this world?
+> 3 Village
+> 5 Castle
+> 6 House
 
-> Du stehst vor einem alten Schloss. Möchtest du eintreten oder umkehren?
-Eintreten
-Umkehren
 
-> Du betrittst das Schloss und findest einen dunklen Flur. Möchtest du eine Fackel anzünden oder ohne Licht weitergehen?
-Fackel anzünden
-Ohne Licht weitergehen
+3 You went to the village. You see villagers.
+4 No villager wants to talk to you.
+> 2 Go back
 
-> Mit der Fackel in der Hand gehst du weiter und erreichst eine Kreuzung. Möchtest du nach links oder rechts gehen?
-Links
-Rechts
+5 You went to the castle where the monster is hiding.
+6 What should you do?
+> 9 Attack
+> 10 Give up
 
-> Du folgst dem Gang nach links und triffst auf eine verschlossene Tür. Möchtest du versuchen, sie zu öffnen oder zurückgehen?
-Versuchen, sie zu öffnen
-Zurückgehen
+7 You went to the house, you rest for a bit.
+8 You wake up and the village was attacked by the monster and no one survived
+> 10
 
-> Die Tür öffnet sich und du trittst in einen geheimnisvollen Raum ein. Möchtest du die Truhe öffnen oder den Raum verlassen?
-Truhe öffnen
-Raum verlassen
+9 You won!
+10 You lose!
