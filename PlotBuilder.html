@@ -1,0 +1,916 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<title>Story Board</title>
+	</head>
+
+	<body>
+		<canvas id="view"></canvas>
+
+		<div class="sidebar" tabindex="0">
+			<button class="btn btn-export" onclick="btnExport()">Export</button>
+			<button class="btn btn-save" onclick="btnSave()">Save</button>
+			<button class="btn btn-load" onclick="btnLoad()">Load</button>
+
+			<br>
+
+			<button id="btn-add" class="btn btn-add-node" onclick="btnAddNode()">Add Node</button>
+			<div class="subtitle">Node</div>
+			<div id="editNode" class="edit" style="opacity: 0.3; pointer-events: none">
+				<input id="node-title" placeholder="Title"></input><br>
+				<textarea id="node-text" placeholder="Text"></textarea><br>	
+				Sender <select name="Sender" id="node-sender">
+				  <option value="self">Self</option>
+				  <option value="other">Other</option>
+				</select>
+				<button class="btn btn-delete-node" onclick="btnDeleteNode()">Delete Node</button>
+			</div>
+
+
+			<div class="subtitle">Connection</div>
+			<div id="editConnection" class="edit" style="opacity: 0.3; pointer-events: none">
+				<input id="connection-title" placeholder="Condition"></input><br>
+				<button class="btn btn-delete-node" onclick="btnDeleteConnection()">Delete Connection</button>
+			</div>
+
+			<br>
+			<p>
+				<b>Shortcuts</b>
+				<br>
+				Shift: Select multiple nodes
+				<br>
+				Ctrl: Select all child nodes
+				<br>
+				Delete: Delete Node/Connection
+				<br>
+				Enter: Add new node
+				<br>
+				W: Write text/condition
+				<br>
+				ArrowUp/ArrowDown: Move selected nodes
+			</p>
+		</div>
+	</body>
+
+	<script>
+		let nodes = [];
+		const canvas = document.getElementById("view");
+		const editNode = document.getElementById("editNode");
+		const editConnection = document.getElementById("editConnection");
+		canvas.width = document.documentElement.clientWidth;
+		canvas.height = document.documentElement.clientHeight;
+		const ctx = canvas.getContext("2d");
+		let view = [0, 0];
+		const mouse = [0, 0];
+		let selectedConnection = null;
+		let lastSelected = null;
+		let selectedNodes = [];
+		let mouse_pressed = false;
+		let mouse_clicked = false;
+		let zoom = 1.0;
+
+		const inputConnectionTitle = document.getElementById("connection-title");
+		const inputTitle = document.getElementById("node-title");
+		const inputText = document.getElementById("node-text");
+		const inputSender = document.getElementById("node-sender");
+		inputTitle.value = "";
+		inputText.value = "";
+		inputSender.value = "self";
+		inputConnectionTitle.value = "";
+
+		function roundRect(ctx, x, y, width, height, radius, left = false, right = false) {
+			ctx.beginPath();
+			ctx.fillRect(x + radius, y, width - radius * 2, height);
+
+			ctx.moveTo(x + radius, y);
+			ctx.lineTo(x + width - radius, y);
+			ctx.quadraticCurveTo(x + width, y, x + width, y + (right ? 0 : radius));
+			ctx.lineTo(x + width, y + height - radius);
+			ctx.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
+			ctx.lineTo(x + radius, y + height);
+			ctx.quadraticCurveTo(x, y + height, x, y + height - radius);
+			ctx.lineTo(x, y + radius);
+			ctx.quadraticCurveTo(x, y, x + (left ? 0 : radius), y);
+
+			ctx.fill();
+
+			ctx.closePath();
+		}
+
+		function getLines(ctx,phrase,maxPxLength,textStyle) {
+			const lines = phrase.split("\n");
+			return lines.map(line => getLinesWord(ctx,line,maxPxLength,textStyle)).flat();
+		}
+
+		function getLinesWord(ctx,phrase,maxPxLength,textStyle) {
+			var wa=phrase.split(" "),
+				phraseArray=[],
+				lastPhrase=wa[0],
+				measure=0,
+				splitChar=" ";
+			ctx.font = textStyle;
+			if (wa.length <= 1) {
+				return wa
+			}
+			for (var i=1;i<wa.length;i++) {
+				var w=wa[i];
+				measure=ctx.measureText(lastPhrase+splitChar+w).width;
+				if (measure<maxPxLength) {
+					lastPhrase+=(splitChar+w);
+				} else {
+					phraseArray.push(lastPhrase);
+					lastPhrase=w;
+				}
+				if (i===wa.length-1) {
+					phraseArray.push(lastPhrase);
+					break;
+				}
+			}
+			return phraseArray;
+		}
+
+		function getCurve(pos_start, pos_end) {
+			const x_diff = pos_end[0] - pos_start[0];
+			const y_diff = pos_end[1] - pos_start[1];
+
+			// 1 -> x < y, 0 -> x > y
+			const f = 1.0 - 1.0 / Math.max((Math.abs(y_diff) / Math.abs(x_diff)), 1);
+
+			const y_ctrlPos0 = pos_start[1] * f + pos_end[1] * (1.0 - f);
+			const y_ctrlPos1 = pos_start[1] * (1.0 - f) + pos_end[1] * f;
+
+			return [ pos_start[0], y_ctrlPos0, pos_end[0], y_ctrlPos1, pos_end[0], pos_end[1] ];
+		}
+
+		function drawCurve(pos_start, pos_end) {
+			const curve = getCurve(pos_start, pos_end);
+			ctx.lineCap = "round";
+			ctx.lineWidth = 5;
+			ctx.beginPath();
+			ctx.moveTo(pos_start[0], pos_start[1]);
+			ctx.bezierCurveTo(curve[0], curve[1], curve[2], curve[3], curve[4], curve[5]);
+			ctx.stroke();
+		}
+
+		// Given the 4 control points on a Bezier curve 
+		// get x,y at interval T along the curve (0<=T<=1)
+		// The curve starts when T==0 and ends when T==1
+		function getCubicBezierXYatPercent(startPt, controlPt1, controlPt2, endPt, percent) {
+			var x = CubicN(percent, startPt.x, controlPt1.x, controlPt2.x, endPt.x);
+			var y = CubicN(percent, startPt.y, controlPt1.y, controlPt2.y, endPt.y);
+			return ({
+				x: x,
+				y: y
+			});
+		}
+
+		// cubic helper formula
+		function CubicN(T, a, b, c, d) {
+			var t2 = T * T;
+			var t3 = t2 * T;
+			return a + (-a * 3 + T * (3 * a - a * T)) * T + (3 * b + T * (-6 * b + b * 3 * T)) * T + (c * 3 - c * 3 * T) * t2 + d * t3;
+		}
+
+		class Node {
+			constructor(pos) {
+				this.size = [200, 100];
+				this.pos = pos || [canvas.width / 2 + Math.sin(Math.random() * 100.0) * 10.0, canvas.height / 2 + Math.sin(Math.random() * 100.0) * 10.0];
+				this.title = "Empty #" + nodes.length;
+				this.text = "";
+				this.sender_self = false;
+				this.grab = null;
+				this.node_size = 10;
+				this.connections = [];
+				this.update();
+			}
+
+			getId() {
+				return nodes.indexOf(this);
+			}
+
+			check_valid() {
+				if (this.text == "") {
+					throw `Empty text in node "${this.title}", either delete node or add text`;
+				}
+
+				if (this.connections.length > 1) {
+					const emptyCondition = this.connections.find(connection => connection.condition == "");
+					if (emptyCondition) {
+						throw `Empty condition in between "${this.title}" and "${emptyCondition.child.title}". Node with multiple connections must have a condition per connection!`;
+					}
+				}
+			}
+
+			serialize_export() {
+				this.check_valid();
+
+				return {
+					title: this.title,
+					text: this.text,
+					sender: this.sender_self ? 0 : 1,
+					connections: this.connections.map(connection => { 
+						return { 
+							child: connection.child.getId(), 
+							condition: connection.condition,
+						}
+					}),
+				}
+			}
+
+
+			serialize_save() {
+				return {
+					id: this.getId(),
+					pos: this.pos,
+					title: this.title,
+					text: this.text,
+					sender_self: this.sender_self,
+					connections: this.connections.map(connection => { 
+						return { 
+							child: connection.child.getId(), 
+							condition: connection.condition,
+						}
+					}),
+				}
+			}
+
+			deserialize(data) {
+				this.pos = data.pos;
+				this.title = data.title;
+				this.text = data.text;
+				this.sender_self = data.sender_self;
+				this.connections = data.connections.map(connection => {
+					return { 
+						condition: connection.condition,  
+						child: nodes[connection.child],
+					}
+				});
+				this.update();
+			}
+
+			canGrab(pos) {
+				return this.inBounds(pos) && !this.inBoundsOfParentNode(pos) && !this.inBoundsOfChildNode(pos);
+			}
+
+			inBounds(pos) {
+				return pos[0] > this.pos[0] && pos[0] < this.pos[0] + this.size[0] && pos[1] > this.pos[1] && pos[1] < this.pos[1] + this.size[1];
+			}
+
+			inBoundsOfParentNode(pos) {
+				return Math.sqrt(Math.pow(pos[0] - this.parentNodePos[0], 2) + Math.pow(pos[1] - this.parentNodePos[1], 2)) < this.node_size;
+			}
+
+			inBoundsOfChildNode(pos) {
+				return Math.sqrt(Math.pow(pos[0] - this.childNodePos[0], 2) + Math.pow(pos[1] - this.childNodePos[1], 2)) < this.node_size;
+			}
+
+			isSelect() {
+				return selectedNodes.indexOf(this) != -1;
+			}
+
+			select(ignore_recursive = []) {
+				if (shift_pressed || ctrl_pressed) {
+					if (!this.isSelect()) 
+						selectedNodes.push(this);
+				} else {
+					selectedNodes = [this];
+				}
+
+				lastSelected = this;
+
+				if (ctrl_pressed && ignore_recursive.indexOf(this) == -1) {
+					this.connections.forEach(connection => connection.child.select([...ignore_recursive, this]));
+				}
+
+				enable(editNode);
+				inputTitle.value = this.title;
+				inputText.value = this.text;
+				inputSender.value = this.sender_self ? "self" : "other";
+			}
+
+			deselect() {
+				if (!this.isSelect() || shift_pressed || ctrl_pressed)
+					return;
+
+				selectedNodes = selectedNodes.filter(node => node != this);
+			}
+
+			addConnection(node) {
+				if (this.connections.find(connection => connection.child == node) == null)
+					this.connections.push({
+						condition: "",
+						child: node,
+					});
+			}
+
+			setSender(sender) {
+				this.sender_self = sender;
+				inputSender.value = sender ? "self" : "other";
+			}
+
+			removeConnection(node) {
+				console.log(node);
+				this.connections = this.connections.filter(connection => connection.child != node);
+			}
+
+			// Connection lines between nodes
+			drawConnections() {
+
+				// bezier curve
+				for (const connection of this.connections) {
+					const isSelected = selectedConnection && (selectedConnection.parent == this && selectedConnection.connection.child == connection.child);
+					ctx.strokeStyle = isSelected ? "white" : "#c09dc3";
+					drawCurve(this.childNodePos, connection.child.parentNodePos);
+
+
+					const center = [(this.childNodePos[0] + connection.child.parentNodePos[0]) / 2, (this.childNodePos[1] + connection.child.parentNodePos[1]) / 2];
+					ctx.textAlign = "center";
+					ctx.font = "bold 20px Sans-Serif";
+
+					if (connection.condition != "") {
+						const width = ctx.measureText(connection.condition).width;
+						ctx.fillStyle = isSelected ? "white" : "#c09dc3";
+						roundRect(ctx, center[0] - width / 2 - 5, center[1] - 20, width + 10, 25, 10);
+						ctx.fillStyle = !isSelected ? "white" : "#c09dc3";
+						ctx.fillText(connection.condition, center[0], center[1]);
+					}
+				}
+
+				this.connections = this.connections.filter(connection => nodes.indexOf(connection.child) > -1);
+			}
+
+			update() {
+				this.parentNodePos = [this.pos[0] + this.size[0] / 2, this.pos[1]];
+				this.childNodePos = [this.pos[0] + this.size[0] / 2, this.pos[1] + this.size[1]];
+
+				let selected = this.isSelect();
+
+				// selection color
+				ctx.fillStyle = "white";
+				let selectionSize = 2.0;
+
+				let hoverParentNode = this.inBoundsOfParentNode([mouse[0] - view[0], mouse[1] - view[1]]);
+				let hoverChildNode = this.inBoundsOfChildNode([mouse[0] - view[0], mouse[1] - view[1]]);
+
+				if (selected) {
+					roundRect(ctx, this.pos[0] - selectionSize, this.pos[1] - selectionSize, this.size[0] + selectionSize * 2, this.size[1] + selectionSize * 2, 16, !this.sender_self, this.sender_self);
+
+					ctx.beginPath();
+					ctx.arc(this.parentNodePos[0], this.parentNodePos[1], this.node_size + selectionSize + (hoverParentNode ? selectionSize : 0), 0, 2 * Math.PI);
+					ctx.arc(this.childNodePos[0], this.childNodePos[1], this.node_size + selectionSize + (hoverChildNode ? selectionSize : 0), 0, 2 * Math.PI);
+					ctx.fill();
+				}
+
+				ctx.beginPath();
+				ctx.fillStyle = hoverParentNode ? "white" : "#e1b6db";
+				ctx.arc(this.parentNodePos[0], this.parentNodePos[1], this.node_size + (hoverParentNode ? selectionSize : 0), 0, 2 * Math.PI);
+				ctx.fill();
+				ctx.beginPath();
+				ctx.fillStyle = hoverChildNode ? "white" : "#e1b6db";
+				ctx.arc(this.childNodePos[0], this.childNodePos[1], this.node_size + (hoverChildNode ? selectionSize : 0), 0, 2 * Math.PI);
+				ctx.fill();
+
+
+				ctx.fillStyle = this.sender_self ? "#cca7ca" : "#b7a7cc";
+				roundRect(ctx, this.pos[0], this.pos[1], this.size[0], this.size[1], 14, !this.sender_self, this.sender_self);
+
+				ctx.fillStyle = "white";
+				ctx.font = "bold 15px Sans-Serif";
+				ctx.textAlign = "left";
+				ctx.fillText(this.title, this.pos[0] + 6, this.pos[1] + 16);
+
+				const lines = getLines(ctx, this.text, this.size[0] - 10, "15px Sans-Serif");
+				for (let i = 0; i < Math.min(lines.length, 5); i++) {
+					ctx.fillText(lines[i], this.pos[0] + 6, this.pos[1] + 34 + i * 14);
+				}
+
+				if (this == lastSelected && selectedNodes.indexOf(lastSelected) != -1) {
+					this.title = inputTitle.value;
+					this.text = inputText.value;
+					this.sender_self = inputSender.value == "self";
+				}
+
+				const hover = this.inBounds([mouse[0] - view[0], mouse[1] - view[1]]);
+
+				if (hover) {
+					document.body.style.cursor = "pointer";
+				}
+
+				if (mouse_clicked) {
+					selected = hover;
+					if (selected) {
+						this.select();
+					} else {
+						this.deselect();
+					}
+				}
+			}
+		}
+
+		function enable(div) {
+			div.style.opacity = 1;
+			div.style.pointerEvents = "auto";
+		}
+
+		function disable(div) {
+			div.style.opacity = 0.3;
+			div.style.pointerEvents = "none";
+		}
+
+		function btnAddNode(spawn_pos, auto_parent_selected = true) {
+			document.getElementById("btn-add").blur();
+
+			let pos = spawn_pos;
+			if (selectedNodes.length) {
+				pos = [selectedNodes[0].pos[0], selectedNodes[0].pos[1] + selectedNodes[0].size[1] + 50];
+				if (selectedNodes[0].connections.length) {
+					pos = [selectedNodes[0].connections[0].child.pos[0] + selectedNodes[0].connections[0].child.size[0] + 50, selectedNodes[0].connections[0].child.pos[1]];
+				}
+			}
+
+			const node = new Node(pos);
+			nodes.push(node);
+
+			if (auto_parent_selected) {
+				selectedNodes.forEach(n => n.addConnection(node));
+			}
+			node.select();
+
+			return node;
+		}
+
+		function btnDeleteNode() {
+			selectedNodes.forEach(node => {
+				nodes.splice(node.getId(), 1);
+			});
+
+			selectedNodes = [];
+		}
+
+		function btnDeleteConnection() {
+			if (selectedConnection) {
+				selectedConnection.parent.removeConnection(selectedConnection.connection.child);
+				selectedConnection = null;
+				inputConnectionTitle.value = "";
+				disable(editConnection);
+			}
+		}
+
+		function btnExport() {
+			const filename = prompt("Filename");
+			try {
+				const data = JSON.stringify(nodes.map(node => node.serialize_export()), null, 2);
+				download(data, filename + '.story', "text/plain");
+			} catch(e) {
+				alert(e);
+			}
+		}
+
+		function download(data, filename, type) {
+			var file = new Blob([data], {type: type});
+			if (window.navigator.msSaveOrOpenBlob) // IE10+
+				window.navigator.msSaveOrOpenBlob(file, filename);
+			else { // Others
+				var a = document.createElement("a"),
+						url = URL.createObjectURL(file);
+				a.href = url;
+				a.download = filename;
+				document.body.appendChild(a);
+				a.click();
+				setTimeout(function() {
+					document.body.removeChild(a);
+					window.URL.revokeObjectURL(url);  
+				}, 0); 
+			}
+		}
+
+		function btnSave() {
+			const filename = prompt("Filename");
+			const data = JSON.stringify({
+				view: view,
+				nodes: nodes.map(node => node.serialize_save())
+			}, null, 2);
+			download(data, filename + '.json', "text/plain");
+		}
+
+		function btnLoad() {
+			nodes = [];
+
+			var input = document.createElement('input');
+			input.type = 'file';
+			input.accept = 'application/json';
+			input.onchange = e => { 
+				var file = e.target.files[0]; 
+				var reader = new FileReader();
+				reader.readAsText(file,'UTF-8');
+
+				// here we tell the reader what to do when it's done reading...
+				reader.onload = readerEvent => {
+					var content = readerEvent.target.result; // this is the content!
+
+					const data = JSON.parse(content);
+					view = data.view;
+					data.nodes.forEach(_ => nodes.push(new Node()));
+					data.nodes.forEach(node_data => nodes[node_data.id].deserialize(node_data));
+				}
+			}
+
+			input.click();
+		}
+
+		window.onresize = function () {
+			canvas.width = document.documentElement.clientWidth;
+			canvas.height = document.documentElement.clientHeight;
+		}
+
+		let grab_pos_start = null;
+		let grab_moved = false;
+		let grab_node = null;
+		let grabNodes = [];
+
+		let nodeChildGrab = null;
+		let nodeParentGrab = null;
+
+		document.addEventListener("mousemove", e => {
+			mouse[0] = e.clientX;
+			mouse[1] = e.clientY;
+
+			if (!mouse_pressed) {
+				return;
+			}
+
+			if (grab_node) {
+				grab_moved = true;
+				grabNodes.forEach(grab => {
+					grab.node.pos = [grab.pos[0] + mouse[0], grab.pos[1] + mouse[1]];
+				});
+			}
+
+			if (grab_pos_start != null) {
+				grab_moved = true;
+				view = [grab_pos_start[0] + mouse[0], grab_pos_start[1] + mouse[1]];
+			}
+		});
+
+		canvas.addEventListener("mousedown", e => {
+			mouse_pressed = true;
+
+			const m = [mouse[0] - view[0], mouse[1] - view[1]];
+			const mouseInNode = nodes.find(node => node.canGrab(m));
+			const mouseInChildNode = nodes.find(node => node.inBoundsOfChildNode(m));
+			const mouseInParentNode = nodes.find(node => node.inBoundsOfParentNode(m));
+
+			if (mouseInChildNode || mouseInParentNode) {
+				nodeChildGrab = mouseInChildNode || null;
+				nodeParentGrab = mouseInParentNode || null;
+				return;
+			}
+
+			grab_node = mouseInNode || null;
+			grabNodes = [];
+			if (grab_node) {
+				grabNodes = [...selectedNodes, grab_node].map(node => {
+					return {
+						node: node,
+						pos: [node.pos[0] - mouse[0], node.pos[1] - mouse[1]],
+					}
+				});
+			} else {
+				grab_pos_start = [view[0] - mouse[0], view[1] - mouse[1]];
+			}
+		});
+
+		canvas.addEventListener("mouseup", e => {
+			mouse_pressed = false;
+		});
+
+		function isInCurve(m) {
+			for (const node of nodes) {
+				for (const connection of node.connections) {
+					const curve = getCurve(node.childNodePos, connection.child.parentNodePos);
+					const len = Math.sqrt(Math.pow(connection.child.parentNodePos[0] - node.childNodePos[0], 2) + Math.pow(connection.child.parentNodePos[1] - node.childNodePos[1], 2)) / 4;
+					for (let i = 0; i < len; i++) {
+						let bezPt = getCubicBezierXYatPercent(
+							{ x: node.childNodePos[0], y: node.childNodePos[1] },
+							{ x: curve[0], y: curve[1] },
+							{ x: curve[2], y: curve[3] },
+							{ x: curve[4], y: curve[5] }, 
+							i / len
+						);
+
+						if (Math.sqrt(Math.pow(m[0] - bezPt.x, 2) + Math.pow(m[1] - bezPt.y, 2)) < 20) {
+							return {
+								parent: node,
+								connection: connection,
+							};
+						}
+					}
+				}
+			}
+			return null;
+		}
+
+		canvas.addEventListener("click", e => {
+			mouse_clicked = !grab_moved;
+			grab_pos_start = null;
+			grab_node = null;
+			grab_moved = false;
+
+			const m = [mouse[0] - view[0], mouse[1] - view[1]];
+
+			if (nodeParentGrab != null) {
+				const mouseInChildNode = nodes.find(node => node.inBoundsOfChildNode(m));
+
+				if (mouseInChildNode != null && mouseInChildNode != nodeParentGrab) {
+					mouseInChildNode.addConnection(nodeParentGrab);
+				} else if (mouseInChildNode == null && Math.sqrt(Math.pow(m[0] - nodeParentGrab.parentNodePos[0], 2) + Math.pow(m[1] - nodeParentGrab.parentNodePos[1], 2)) > nodeParentGrab.node_size * 2) {
+					const node = btnAddNode([m[0] - nodeParentGrab.size[0] / 2, m[1] - nodeParentGrab.size[1]], auto_parent_selected = false);
+					node.addConnection(nodeParentGrab);
+					mouse_clicked = false;
+				}
+			}
+
+			if (nodeChildGrab != null) {
+				const mouseInParentNode = nodes.find(node => node.inBoundsOfParentNode(m));
+
+				if (mouseInParentNode != null && mouseInParentNode != nodeChildGrab) {
+					nodeChildGrab.addConnection(mouseInParentNode);
+				} else if (mouseInParentNode == null && Math.sqrt(Math.pow(m[0] - nodeChildGrab.childNodePos[0], 2) + Math.pow(m[1] - nodeChildGrab.childNodePos[1], 2)) > nodeChildGrab.node_size * 2) {
+					const node = btnAddNode([m[0] - nodeChildGrab.size[0] / 2, m[1]], auto_parent_selected = false);
+					nodeChildGrab.addConnection(node);
+					mouse_clicked = false;
+				}
+			}
+
+			// Toggle sidemenu when curve selected
+			selectedConnection = isInCurve(m);
+			if (selectedConnection) {
+				inputConnectionTitle.value = selectedConnection.connection.condition;
+				enable(editConnection);
+			} else {
+				inputConnectionTitle.value = "";
+				disable(editConnection);
+			}
+
+			nodeChildGrab = null;
+			nodeParentGrab = null;
+		});
+
+		window.addEventListener("wheel", e => {
+			//zoom = Math.max(0.5, Math.min(3.0, zoom + e.deltaY / 1000.0));
+		}, false);
+
+		canvas.addEventListener("contextmenu", e => {
+			e.preventDefault();
+		}, false);
+
+		let shift_pressed = false;
+		let ctrl_pressed = false;
+
+		let input_focus = 0;
+
+		inputText.addEventListener("focusin", e => input_focus |= 1);
+		inputTitle.addEventListener("focusin", e => input_focus |= 2);
+		inputConnectionTitle.addEventListener("focusin", e => input_focus |= 4);
+		inputText.addEventListener("focusout", e => input_focus &= ~1);
+		inputTitle.addEventListener("focusout", e => input_focus &= ~2);
+		inputConnectionTitle.addEventListener("focusout", e => input_focus &= ~4);
+
+		function getFirstChildConnection() {
+			for (let node of selectedNodes) {
+				if (node.connections.length > 0)
+					return node.connections[0].child;
+			}
+			return null;
+		}
+
+		function getParent(child) {
+			for (let node of nodes)
+				if (node.connections.find(connection => connection.child == child) != null)
+					return node;
+			return null;
+		}
+
+		function getFirstParentConnection() {
+			for (let node of selectedNodes) {
+				const parent = getParent(node);
+				if (parent != null)
+					return parent;
+			}
+			return null;
+		}
+
+		document.addEventListener("keydown", e => {
+			if (e.key == "Delete") {
+				btnDeleteNode();
+				btnDeleteConnection();
+			}
+
+			if (e.key == "Shift") {
+				shift_pressed = true;
+			}
+
+			if (e.key == "Control") {
+				ctrl_pressed = true;
+			}
+
+			if (!input_focus) {
+				if (e.key == " ") {
+					selectedNodes.forEach(node => node.setSender(!node.sender_self));
+				}
+
+				if (e.key == "w") {
+					e.preventDefault();
+					if (selectedNodes.length > 0) {
+						inputText.focus();
+					}
+					if (selectedConnection != null) {
+						inputConnectionTitle.focus();
+					}
+				}
+
+				if (e.key == "ArrowUp") {
+					const node = getFirstParentConnection();
+					if (node) node.select();
+				}
+
+				if (e.key == "ArrowDown") {
+					const node = getFirstChildConnection();
+					if (node) node.select();
+				}
+
+				if (e.key == "Enter") {
+					btnAddNode();
+				}
+			}
+		}, false);
+
+		document.addEventListener("keyup", e => {
+			if (e.key == "Shift") {
+				shift_pressed = false;
+			}
+
+			if (e.key == "Control") {
+				ctrl_pressed = false;
+			}
+		}, false);
+
+
+		function drawGrid() {
+			ctx.fillStyle = "#ada3b9";
+			let mH = Math.floor(canvas.height / 50) * 50;
+			let mW = Math.floor(canvas.width / 50) * 50;
+			for (let x = 0; x < canvas.width; x += 50) {
+				for (let y = 0; y < canvas.height; y += 50) {
+					ctx.fillRect((x + view[0] + 10000.0) % mW, (y + view[1] + 10000.0) % mH, 2, 2);
+				}
+			}
+		}
+
+
+		function loop() {
+			ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+			document.body.style.cursor = "default";
+			drawGrid();
+
+			ctx.save();
+			ctx.translate(view[0], view[1]);
+			ctx.scale(zoom, zoom);
+
+			ctx.strokeStyle = "#f1c6f5";
+			if (nodeChildGrab) {
+				drawCurve(nodeChildGrab.childNodePos, [mouse[0] - view[0], mouse[1] - view[1]]);
+			}
+			if (nodeParentGrab) {
+				drawCurve([mouse[0] - view[0], mouse[1] - view[1]], nodeParentGrab.parentNodePos);
+			}
+
+
+			nodes.forEach(node => node.drawConnections());
+			nodes.forEach(node => node.update());
+			ctx.restore();
+
+			if (selectedNodes.length <= 0) {
+				disable(editNode);
+				inputTitle.value = "";
+				inputText.value = "";
+				inputSender.value = "self";
+			}
+
+			if (selectedConnection != null) {
+				selectedConnection.connection.condition = inputConnectionTitle.value;
+			}
+
+			if (grab_moved || nodeChildGrab || nodeParentGrab) {
+				document.body.style.cursor = "grabbing";
+			}
+
+			mouse_clicked = false;
+			requestAnimationFrame(loop);
+		}
+
+		loop();
+	</script>
+
+	<style>
+		body {
+			margin: 0px;
+			padding: 0px;
+			background: #7d7390;
+			font-family: sans-serif;
+			overflow: hidden;
+		}
+
+		textarea {
+			width: 100%;
+			min-width: 300px;
+			min-height: 200px;
+			border-radius: 4px;
+			border: none;
+			padding: 0px 0px 5px 5px;
+			margin-bottom: 5px;
+			resize: horizontal;
+		}
+
+		input {
+			width: 100%;
+			border-radius: 4px;
+			border: none;
+			padding: 5px 0px 5px 5px;
+			margin-bottom: 5px;
+		}
+
+		.view {
+			width: 100%;
+			height: 100%;
+		}
+
+		.sidebar {
+			resize: horizontal;
+			overflow: auto;
+			position: absolute;
+			left: 10px;
+			top: 10px;
+			bottom: 10px;
+			background: #fff7f0;
+			padding: 20px;
+			border-radius: 4px;
+			box-shadow: 0px 0px 10px 10px rgba(0,0,0,0.1);
+		}
+
+		.subtitle {
+			margin-top: 20px;
+			margin-bottom: 0px;
+			font-size: 20px;
+			color: #7d7390;
+		}
+
+		.edit {
+			background: #e5d9e1;
+			padding: 10px;
+			border-radius: 4px;
+		}
+
+		.btn {
+			border: none;
+			font-size: 16px;
+			border-radius: 4px;
+			padding: 10px;
+			color: #7d7390;
+			width: 100%;
+			margin-bottom: 5px;
+		}
+
+		.btn:hover {
+			cursor: pointer;
+			opacity: 0.8;
+		}
+
+		.btn:active {
+			opacity: 0.5;
+		}
+
+		.btn-export {
+			background-color: #a6c7e7;
+		}
+
+		.btn-add-node {
+			background-color: #ffe5ba;
+		}
+
+		.btn-delete-node {
+			background-color: #ebaebc;
+		}
+
+		.btn-save {
+			background-color: #c8dcbe;
+		}
+
+		.btn-load {
+			background-color: #c8dcbe;
+		}
+	</style>
+
+</html>
