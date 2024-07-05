@@ -44,5 +44,4 @@ function processStory() {
   }
 }
 
-function displayStory() {
-}
+function displayStory() {}
