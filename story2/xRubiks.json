@@ -1,31 +1,22 @@
 {
-  "view": [
-    476,
-    -45
-  ],
+  "view": [476, -45],
   "nodes": [
     {
       "id": 0,
-      "pos": [
-        377.67405824609375,
-        86.1923756338499
-      ],
+      "pos": [377.67405824609375, 86.1923756338499],
       "title": "Start",
       "text": "A wild xRubiks spawned in front of you",
       "sender_self": false,
       "connections": [
         {
           "child": 1,
-          "condition": ""
+          "condition": "hey"
         }
       ]
     },
     {
       "id": 1,
-      "pos": [
-        377,
-        234
-      ],
+      "pos": [377, 234],
       "title": "Question",
       "text": "What are you going to do?",
       "sender_self": false,
@@ -46,10 +37,7 @@
     },
     {
       "id": 2,
-      "pos": [
-        -24,
-        474
-      ],
+      "pos": [-24, 474],
       "title": "Option 1",
       "text": "xRubiks is not a magic cube after all... \nYou are being eaten up by Rubiks :(",
       "sender_self": false,
@@ -62,10 +50,7 @@
     },
     {
       "id": 3,
-      "pos": [
-        377,
-        538
-      ],
+      "pos": [377, 538],
       "title": "Option 2",
       "text": "xRubiks enjoys the look of your IDE. He will from now on be your friend.",
       "sender_self": false,
@@ -78,10 +63,7 @@
     },
     {
       "id": 4,
-      "pos": [
-        762,
-        472
-      ],
+      "pos": [762, 472],
       "title": "Option 3",
       "text": "You discover the xRubiks in front of you is just a hologram. Dinosaurs are dead after all...",
       "sender_self": false,
@@ -94,10 +76,7 @@
     },
     {
       "id": 5,
-      "pos": [
-        -19,
-        1217
-      ],
+      "pos": [-19, 1217],
       "title": "End",
       "text": "You Lose",
       "sender_self": false,
@@ -105,10 +84,7 @@
     },
     {
       "id": 6,
-      "pos": [
-        760,
-        1015
-      ],
+      "pos": [760, 1015],
       "title": "End",
       "text": "You Win",
       "sender_self": false,
@@ -116,10 +92,7 @@
     },
     {
       "id": 7,
-      "pos": [
-        379,
-        677
-      ],
+      "pos": [379, 677],
       "title": "Empty #7",
       "text": "As a friend and a fellow Intellij User, xRubiks asks you about your favourite Intellij theme.",
       "sender_self": false,
@@ -140,10 +113,7 @@
     },
     {
       "id": 8,
-      "pos": [
-        379,
-        963
-      ],
+      "pos": [379, 963],
       "title": "Empty #8",
       "text": "xRubiks lost all hope in you. He eats you up ",
       "sender_self": false,
@@ -156,10 +126,7 @@
     },
     {
       "id": 9,
-      "pos": [
-        611,
-        830
-      ],
+      "pos": [611, 830],
       "title": "Empty #9",
       "text": "xRubiks likes your answer - You are allowed to live (for now)",
       "sender_self": false,
@@ -172,10 +139,7 @@
     },
     {
       "id": 10,
-      "pos": [
-        124,
-        835
-      ],
+      "pos": [124, 835],
       "title": "Empty #10",
       "text": "xRubiks notices that you are a traitor and never used Intellij before...\n",
       "sender_self": false,
@@ -188,10 +152,7 @@
     },
     {
       "id": 11,
-      "pos": [
-        123,
-        961
-      ],
+      "pos": [123, 961],
       "title": "Empty #11",
       "text": "You not only lose xRubiks as a friend but lost all respect from the Intellij community.",
       "sender_self": false,
